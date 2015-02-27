@@ -19,8 +19,11 @@ namespace SynchS3LocalFolder
         {
             Dictionary<string, string> LocalFiles = new Dictionary<string, string>();
             Dictionary<string, string> S3Files = new Dictionary<string, string>();
+            Dictionary<string, string> FilesOnSource = new Dictionary<string, string>();
+            Dictionary<string, string> FilesOnTarget = new Dictionary<string, string>();
             Dictionary<string, string> FilesToCopy = new Dictionary<string, string>();
             AmazonS3Client client = new AmazonS3Client(Amazon.RegionEndpoint.USEast1);
+            TransferUtility transfer = new TransferUtility(client);
             int iBackSlashIndex;
             string sLocalFilenameNoPath;
             string sS3FilenameNoPath;
@@ -85,7 +88,33 @@ namespace SynchS3LocalFolder
                             S3Files.Add(sS3FilenameNoPath, sS3FilenameNoPath);
                     }
                     // ------------------------------------------------------------------------------------------------------
-                }
+
+                    if(args[0].Substring(0,5)=="s3://"||args[0].Substring(0,5)=="S3://") // S3 is the source
+                    {
+                        FilesOnSource = S3Files;
+                        FilesOnTarget = LocalFiles;
+                    }
+                    else // Local folder is the source
+                    {
+                        FilesOnSource = LocalFiles;
+                        FilesOnTarget = S3Files;
+                    }
+
+                    foreach(string currFile in FilesOnSource.Keys)
+                    {
+                        if (!FilesOnTarget.ContainsKey(currFile))
+                            FilesToCopy.Add(currFile, currFile);
+                    }
+
+                    foreach(string currFile in FilesToCopy.Keys)
+                    {
+                        if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
+                            transfer.Download(currFile, sBucketName + "/" + sBucketPrefix + "/", dirName + currFile);
+                        else // Local folder is the source
+                            transfer.Upload(dirName + "\\" + currFile, sBucketName + "/" + sBucketPrefix, currFile);
+                    }
+
+                } // end try
                 catch (Exception e)
                 {
                     Console.WriteLine("Erro! " + e.Message);
