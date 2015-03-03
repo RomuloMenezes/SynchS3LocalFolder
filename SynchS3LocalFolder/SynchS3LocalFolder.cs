@@ -109,9 +109,9 @@ namespace SynchS3LocalFolder
                     foreach(string currFile in FilesToCopy.Keys)
                     {
                         if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
-                            transfer.Download(dirName + currFile, sBucketName + "/" + sBucketPrefix, currFile);
+                            transfer.Download(dirName + "/" + currFile, sBucketName + "/" + sBucketPrefix, currFile);
                         else // Local folder is the source
-                            transfer.Upload(dirName + currFile, sBucketName + "/" + sBucketPrefix, currFile);
+                            transfer.Upload(dirName + "/" + currFile, sBucketName + "/" + sBucketPrefix, currFile);
                     }
 
                 } // end try
