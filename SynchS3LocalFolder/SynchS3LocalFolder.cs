@@ -78,15 +78,32 @@ namespace SynchS3LocalFolder
                     ListObjectsRequest request = new ListObjectsRequest();
                     request.BucketName = sBucketName;
                     request.Prefix = sBucketPrefix;
+                    ListObjectsResponse response = new ListObjectsResponse();
+                    request.MaxKeys = 50000;
 
-                    ListObjectsResponse response = client.ListObjects(request);
-
-                    foreach (S3Object entry in response.S3Objects)
+                    do
                     {
-                        sS3FilenameNoPath = entry.Key.Substring(request.Prefix.Length + 1, entry.Key.Length - request.Prefix.Length - 1);
-                        if(sS3FilenameNoPath.Length > 0)
-                            S3Files.Add(sS3FilenameNoPath, sS3FilenameNoPath);
-                    }
+                        response = client.ListObjects(request);
+
+                        foreach (S3Object entry in response.S3Objects)
+                        {
+                            sS3FilenameNoPath = entry.Key.Substring(request.Prefix.Length + 1, entry.Key.Length - request.Prefix.Length - 1);
+                            if(sS3FilenameNoPath.Length > 0)
+                                S3Files.Add(sS3FilenameNoPath, sS3FilenameNoPath);
+                        }
+
+                        // REMEMBER ListObjects returns not more than 1000 objects. If response is truncated, set the marker to get the next 
+                        // set of keys.
+                        if (response.IsTruncated)
+                        {
+                            request.Marker = response.NextMarker;
+                        }
+                        else
+                        {
+                            request = null;
+                        }
+
+                    } while (request != null);
                     // ------------------------------------------------------------------------------------------------------
 
                     if(args[0].Substring(0,5)=="s3://"||args[0].Substring(0,5)=="S3://") // S3 is the source
