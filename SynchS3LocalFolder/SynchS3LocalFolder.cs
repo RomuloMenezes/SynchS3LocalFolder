@@ -25,12 +25,15 @@ namespace SynchS3LocalFolder
             AmazonS3Client client = new AmazonS3Client(Amazon.RegionEndpoint.USEast1);
             TransferUtility transfer = new TransferUtility(client);
             int iBackSlashIndex;
-            string sLocalFilenameNoPath;
-            string sS3FilenameNoPath;
-            string sBucketName;
-            string sBucketPrefix;
+            string sSourceBucketName = "";
+            string sSourceBucketPrefix = "";
+            string sTargetBucketName = "";
+            string sTargetBucketPrefix = "";
             string dirName = "";
-
+            bool bLocalFilesPresent = false;
+            CopyObjectRequest request = new CopyObjectRequest();
+            CopyObjectResponse response;
+            
             if (args.Length == 0)
             {
                 Console.WriteLine("Please select source and target folders");
@@ -47,75 +50,37 @@ namespace SynchS3LocalFolder
             {
                 try
                 {
+                    // ---------------------------------------------- Source location (parameter 1) ----------------------------------------------
                     if(args[0].Substring(0,5)=="s3://"||args[0].Substring(0,5)=="S3://")
                     {
                         iBackSlashIndex = args[0].IndexOf('/',5);
-                        sBucketName = args[0].Substring(5, iBackSlashIndex - 5);
-                        sBucketPrefix = args[0].Substring(iBackSlashIndex + 1, args[0].Length - iBackSlashIndex - 1);
-
-                        dirName = args[1];
+                        sSourceBucketName = args[0].Substring(5, iBackSlashIndex - 5);
+                        sSourceBucketPrefix = args[0].Substring(iBackSlashIndex + 1, args[0].Length - iBackSlashIndex - 1);
+                        FilesOnSource = GetS3Files(client, sSourceBucketName, sSourceBucketPrefix);
                     }
                     else
                     {
                         dirName = args[0];
+                        FilesOnSource = GetLocalFiles(dirName);
+                        bLocalFilesPresent = true;
+                    }
+                    // ---------------------------------------------------------------------------------------------------------------------------
 
+                    // ---------------------------------------------- Target location (parameter 2) ----------------------------------------------
+                    if (args[1].Substring(0, 5) == "s3://" || args[1].Substring(0, 5) == "S3://")
+                    {
                         iBackSlashIndex = args[1].IndexOf('/', 5);
-                        sBucketName = args[1].Substring(5, iBackSlashIndex - 5);
-                        sBucketPrefix = args[1].Substring(iBackSlashIndex + 1, args[1].Length - iBackSlashIndex - 1);
+                        sTargetBucketName = args[1].Substring(5, iBackSlashIndex - 5);
+                        sTargetBucketPrefix = args[1].Substring(iBackSlashIndex + 1, args[1].Length - iBackSlashIndex - 1);
+                        FilesOnTarget = GetS3Files(client, sTargetBucketName, sTargetBucketPrefix);
                     }
-
-                    // ---------------------------------------------- Local Files ----------------------------------------------
-                    string[] fileEntries = Directory.GetFiles(dirName);
-                    foreach (string sCurrFileName in fileEntries)
+                    else
                     {
-                        iBackSlashIndex = sCurrFileName.LastIndexOf('\\') + 1;
-                        sLocalFilenameNoPath = sCurrFileName.Substring(iBackSlashIndex, sCurrFileName.Length - iBackSlashIndex);
-                        LocalFiles.Add(sLocalFilenameNoPath, sLocalFilenameNoPath);
+                        dirName = args[1];
+                        FilesOnTarget = GetLocalFiles(dirName);
+                        bLocalFilesPresent = true;
                     }
-                    // ---------------------------------------------------------------------------------------------------------
-
-                    // ---------------------------------------------- S3 Files ----------------------------------------------
-                    ListObjectsRequest request = new ListObjectsRequest();
-                    request.BucketName = sBucketName;
-                    request.Prefix = sBucketPrefix;
-                    ListObjectsResponse response = new ListObjectsResponse();
-                    request.MaxKeys = 50000;
-
-                    do
-                    {
-                        response = client.ListObjects(request);
-
-                        foreach (S3Object entry in response.S3Objects)
-                        {
-                            sS3FilenameNoPath = entry.Key.Substring(request.Prefix.Length + 1, entry.Key.Length - request.Prefix.Length - 1);
-                            if(sS3FilenameNoPath.Length > 0)
-                                S3Files.Add(sS3FilenameNoPath, sS3FilenameNoPath);
-                        }
-
-                        // REMEMBER ListObjects returns not more than 1000 objects. If response is truncated, set the marker to get the next 
-                        // set of keys.
-                        if (response.IsTruncated)
-                        {
-                            request.Marker = response.NextMarker;
-                        }
-                        else
-                        {
-                            request = null;
-                        }
-
-                    } while (request != null);
-                    // ------------------------------------------------------------------------------------------------------
-
-                    if(args[0].Substring(0,5)=="s3://"||args[0].Substring(0,5)=="S3://") // S3 is the source
-                    {
-                        FilesOnSource = S3Files;
-                        FilesOnTarget = LocalFiles;
-                    }
-                    else // Local folder is the source
-                    {
-                        FilesOnSource = LocalFiles;
-                        FilesOnTarget = S3Files;
-                    }
+                    // ---------------------------------------------------------------------------------------------------------------------------
 
                     foreach(string currFile in FilesOnSource.Keys)
                     {
@@ -125,10 +90,21 @@ namespace SynchS3LocalFolder
 
                     foreach(string currFile in FilesToCopy.Keys)
                     {
-                        if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
-                            transfer.Download(dirName + "\\" + currFile, sBucketName + "/" + sBucketPrefix, currFile);
-                        else // Local folder is the source
-                            transfer.Upload(dirName + "/" + currFile, sBucketName + "/" + sBucketPrefix, currFile);
+                        if (bLocalFilesPresent)
+                        {
+                            if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
+                                transfer.Download(dirName + "\\" + currFile, sSourceBucketName + "/" + sSourceBucketPrefix, currFile);
+                            else // Local folder is the source
+                                transfer.Upload(dirName + "/" + currFile, sTargetBucketName + "/" + sTargetBucketPrefix, currFile);
+                        }
+                        else
+                        {
+                            request.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
+                            request.SourceKey= currFile;
+                            request.DestinationBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
+                            request.DestinationKey = currFile;
+                            response = client.CopyObject(request);
+                        }
                     }
 
                 } // end try
@@ -138,6 +114,57 @@ namespace SynchS3LocalFolder
                     return;
                 }
             }
+        }
+
+        private static Dictionary<string, string> GetLocalFiles(string dirName)
+        {
+            int iBackSlashIndex;
+            string sLocalFilenameNoPath;
+            Dictionary<string, string> LocalFiles = new Dictionary<string, string>();
+            string[] fileEntries = Directory.GetFiles(dirName);
+            foreach (string sCurrFileName in fileEntries)
+            {
+                iBackSlashIndex = sCurrFileName.LastIndexOf('\\') + 1;
+                sLocalFilenameNoPath = sCurrFileName.Substring(iBackSlashIndex, sCurrFileName.Length - iBackSlashIndex);
+                LocalFiles.Add(sLocalFilenameNoPath, sLocalFilenameNoPath);
+            }
+            return LocalFiles;
+        }
+
+        private static Dictionary<string, string> GetS3Files(AmazonS3Client client, string sBucketName, string sBucketPrefix)
+        {
+            string sS3FilenameNoPath;
+            Dictionary<string, string> S3Files = new Dictionary<string, string>();
+            ListObjectsRequest request = new ListObjectsRequest();
+            request.BucketName = sBucketName;
+            request.Prefix = sBucketPrefix;
+            ListObjectsResponse response = new ListObjectsResponse();
+            request.MaxKeys = 50000;
+
+            do
+            {
+                response = client.ListObjects(request);
+
+                foreach (S3Object entry in response.S3Objects)
+                {
+                    sS3FilenameNoPath = entry.Key.Substring(request.Prefix.Length + 1, entry.Key.Length - request.Prefix.Length - 1);
+                    if (sS3FilenameNoPath.Length > 0)
+                        S3Files.Add(sS3FilenameNoPath, sS3FilenameNoPath);
+                }
+
+                // REMEMBER ListObjects returns not more than 1000 objects. If response is truncated, set the marker to get the next 
+                // set of keys.
+                if (response.IsTruncated)
+                {
+                    request.Marker = response.NextMarker;
+                }
+                else
+                {
+                    request = null;
+                }
+
+            } while (request != null);
+            return S3Files;
         }
     }
 }
