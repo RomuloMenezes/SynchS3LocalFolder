@@ -33,6 +33,8 @@ namespace SynchS3LocalFolder
             bool bLocalFilesPresent = false;
             CopyObjectRequest request = new CopyObjectRequest();
             CopyObjectResponse response;
+            bool synchToTarget = false;
+            bool deleteSynchToken = false;
             
             if (args.Length == 0)
             {
@@ -46,7 +48,7 @@ namespace SynchS3LocalFolder
                 return;
             }
 
-            if (args.Length == 2)
+            if (args.Length > 1)
             {
                 try
                 {
@@ -94,19 +96,72 @@ namespace SynchS3LocalFolder
                         {
                             if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
                                 transfer.Download(dirName + "\\" + currFile, sSourceBucketName + "/" + sSourceBucketPrefix, currFile);
+                                if(synchToTarget)
+                                    transfer.Download("SynchToken.pmu", sSourceBucketName + "/" + sSourceBucketPrefix, "SynchToken.pmu");
                             else // Local folder is the source
+                            {
                                 transfer.Upload(dirName + "/" + currFile, sTargetBucketName + "/" + sTargetBucketPrefix, currFile);
+                                if(synchToTarget)
+                                    transfer.Upload("SynchToken.pmu", sTargetBucketName + "/" + sTargetBucketPrefix, "SynchToken.pmu");
+                            }
+                        }
+                        else
+                        {
+                            // ---------------------------------- Temporary code ----------------------------------
+                            if (currFile.Length > 18)
+                                if (currFile.Substring(0, 19) == "ppa_archive_2015-03")
+                                {
+                                    request.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
+                                    request.SourceKey = currFile;
+                                    request.DestinationBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
+                                    request.DestinationKey = currFile;
+                                    response = client.CopyObject(request);
+                                }
+                            // ------------------------------------------------------------------------------------
+                            //request.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
+                            //request.SourceKey = currFile;
+                            //request.DestinationBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
+                            //request.DestinationKey = currFile;
+                            //response = client.CopyObject(request);
+                        }
+                    }
+
+                    if (args.Length == 3)
+                        if (args[2] == "SynchToTarget")
+                            synchToTarget = true;
+                        else
+                            if (args[2] == "New")
+                                deleteSynchToken = true;
+                    else
+                    {
+                        if (args.Length == 4)
+                            if (args[3] == "SynchToTarget")
+                                synchToTarget = true;
+                            else
+                                if (args[3] == "New")
+                                    deleteSynchToken = true;
+                    }
+
+                    if(synchToTarget)
+                    {
+                        if (bLocalFilesPresent)
+                        {
+                            if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
+                                transfer.Download("SynchToken.pmu", sSourceBucketName + "/" + sSourceBucketPrefix, "SynchToken.pmu");
+                            else // Local folder is the source
+                            {
+                                transfer.Upload("SynchToken.pmu", sTargetBucketName + "/" + sTargetBucketPrefix, "SynchToken.pmu");
+                            }
                         }
                         else
                         {
                             request.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
-                            request.SourceKey= currFile;
+                            request.SourceKey = "SynchToken.pmu";
                             request.DestinationBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
-                            request.DestinationKey = currFile;
+                            request.DestinationKey = "SynchToken.pmu";
                             response = client.CopyObject(request);
                         }
                     }
-
                 } // end try
                 catch (Exception e)
                 {
