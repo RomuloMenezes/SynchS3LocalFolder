@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -35,6 +36,11 @@ namespace SynchS3LocalFolder
             CopyObjectResponse response;
             bool synchToTarget = false;
             bool deleteSynchToken = false;
+            bool loadNew = false;
+            bool loadAll = false;
+            string sLatestFile = "";
+
+            string lastFileSavedFromConfig = ConfigurationManager.AppSettings["LastFileSaved"];
             
             if (args.Length == 0)
             {
@@ -49,7 +55,7 @@ namespace SynchS3LocalFolder
             }
 
             if (args.Length > 1)
-            {
+            { 
                 try
                 {
                     // ---------------------------------------------- Source location (parameter 1) ----------------------------------------------
@@ -67,7 +73,7 @@ namespace SynchS3LocalFolder
                         bLocalFilesPresent = true;
                     }
                     // ---------------------------------------------------------------------------------------------------------------------------
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
                     // ---------------------------------------------- Target location (parameter 2) ----------------------------------------------
                     if (args[1].Substring(0, 5) == "s3://" || args[1].Substring(0, 5) == "S3://")
                     {
@@ -84,10 +90,87 @@ namespace SynchS3LocalFolder
                     }
                     // ---------------------------------------------------------------------------------------------------------------------------
 
+                    // --------------------------------------------------- Parameters 3 and 4 ----------------------------------------------------
+                    // Parameters 3 and 4 are optional and the order in which they are passed is irrelevant. They are flags that determine:
+                    //
+                    //     1. if a copy action should be synched between a producer execution and a consumer one. In that case, after all
+                    //        the files have been copied from source to target, a synch file (SynchToken.pmu) is also moved. The consumer
+                    //        execution only starts when the synch file is found. The consumer execution deletes the synch file when the
+                    //        copying is done.
+                    //        For this synching to happen the producer execution must be called with the parameter "SynchToTarget" and the 
+                    //        consumer execution must be called with the parameter "SynchToSource"
+                    //
+                    //     2. the code only copies the files that are in the source and aren't in the target. The parameter "All" or "New"
+                    //        determines whether all the missing files are copied - in case the parameter "All" is passed - or only those
+                    //        who are later than the last file copied in a previous execution - in case the parameter "New" is passed.
+                    //        With that purpose, in each execution the name of the later file copied is saved in the app.config.
+
+                    if (args.Length == 3)
+                    {
+                        switch(args[2])
+                        {
+                            case "SynchToTarget":
+                                synchToTarget = true;
+                                break;
+                            case "SynchToSource":
+                                deleteSynchToken = true;
+                                break;
+                            case "New":
+                                loadNew = true;
+                                break;
+                            case "All":
+                                loadAll = true;
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        if (args.Length == 4)
+                        {
+                            switch (args[2])
+                            {
+                                case "SynchToTarget":
+                                    synchToTarget = true;
+                                    break;
+                                case "SynchToSource":
+                                    deleteSynchToken = true;
+                                    break;
+                                case "New":
+                                    loadNew = true;
+                                    break;
+                                case "All":
+                                    loadAll = true;
+                                    break;
+                            }
+                            switch (args[3])
+                            {
+                                case "SynchToTarget":
+                                    synchToTarget = true;
+                                    break;
+                                case "SynchToSource":
+                                    deleteSynchToken = true;
+                                    break;
+                                case "New":
+                                    loadNew = true;
+                                    break;
+                                case "All":
+                                    loadAll = true;
+                                    break;
+                            }
+                        }
+                    }
+                    // ---------------------------------------------------------------------------------------------------------------------------
+
+                    sLatestFile = lastFileSavedFromConfig;
                     foreach(string currFile in FilesOnSource.Keys)
                     {
                         if (!FilesOnTarget.ContainsKey(currFile))
+                        {
                             FilesToCopy.Add(currFile, currFile);
+                            if (String.Compare(currFile, sLatestFile, true) > 0 && currFile.Substring(currFile.Length-2,2) == ".d")
+                                sLatestFile = currFile;
+
+                        }
                     }
 
                     foreach(string currFile in FilesToCopy.Keys)
@@ -126,26 +209,10 @@ namespace SynchS3LocalFolder
                         }
                     }
 
-                    if (args.Length == 3)
-                        if (args[2] == "SynchToTarget")
-                            synchToTarget = true;
-                        else
-                            if (args[2] == "New")
-                                deleteSynchToken = true;
-                    else
-                    {
-                        if (args.Length == 4)
-                            if (args[3] == "SynchToTarget")
-                                synchToTarget = true;
-                            else
-                                if (args[3] == "New")
-                                    deleteSynchToken = true;
-                    }
-
                     if(synchToTarget)
                     {
                         if (bLocalFilesPresent)
-                        {
+                        {                                                                                                                                                                                                                                                                                                                                                                                                                                                   
                             if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
                                 transfer.Download("SynchToken.pmu", sSourceBucketName + "/" + sSourceBucketPrefix, "SynchToken.pmu");
                             else // Local folder is the source
@@ -162,6 +229,14 @@ namespace SynchS3LocalFolder
                             response = client.CopyObject(request);
                         }
                     }
+
+                    // Storing last file saved on app.config
+                    // Remember this DOES NOT work when running on debug mode.
+                    Configuration configuration = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                    configuration.AppSettings.Settings["LastFileSaved"].Value = sLatestFile;
+                    configuration.Save();
+                    ConfigurationManager.RefreshSection("appSettings");
+
                 } // end try
                 catch (Exception e)
                 {
