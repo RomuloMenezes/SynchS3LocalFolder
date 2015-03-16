@@ -32,13 +32,15 @@ namespace SynchS3LocalFolder
             string sTargetBucketPrefix = "";
             string dirName = "";
             bool bLocalFilesPresent = false;
-            CopyObjectRequest request = new CopyObjectRequest();
-            CopyObjectResponse response;
+            CopyObjectRequest copyRequest = new CopyObjectRequest();
+            CopyObjectResponse copyResponse;
+            DeleteObjectRequest deleteRequest = new DeleteObjectRequest();
             bool synchToTarget = false;
-            bool deleteSynchToken = false;
+            bool SynchToSource = false;
             bool loadNew = false;
             bool loadAll = false;
             string sLatestFile = "";
+            int waitForToken = 0;
 
             string lastFileSavedFromConfig = ConfigurationManager.AppSettings["LastFileSaved"];
             
@@ -113,7 +115,7 @@ namespace SynchS3LocalFolder
                                 synchToTarget = true;
                                 break;
                             case "SynchToSource":
-                                deleteSynchToken = true;
+                                SynchToSource = true;
                                 break;
                             case "New":
                                 loadNew = true;
@@ -133,7 +135,7 @@ namespace SynchS3LocalFolder
                                     synchToTarget = true;
                                     break;
                                 case "SynchToSource":
-                                    deleteSynchToken = true;
+                                    SynchToSource = true;
                                     break;
                                 case "New":
                                     loadNew = true;
@@ -145,21 +147,34 @@ namespace SynchS3LocalFolder
                             switch (args[3])
                             {
                                 case "SynchToTarget":
-                                    synchToTarget = true;
+                                    if(!SynchToSource)
+                                        synchToTarget = true;
                                     break;
                                 case "SynchToSource":
-                                    deleteSynchToken = true;
+                                    if (!synchToTarget)
+                                        SynchToSource = true;
                                     break;
                                 case "New":
-                                    loadNew = true;
+                                    if (!loadAll)
+                                        loadNew = true;
                                     break;
                                 case "All":
-                                    loadAll = true;
+                                    if (!loadNew)
+                                        loadAll = true;
                                     break;
                             }
                         }
                     }
                     // ---------------------------------------------------------------------------------------------------------------------------
+
+                    if(SynchToSource)
+                    {
+                        while(!FilesOnTarget.ContainsKey("SynchToken.pmu") && waitForToken < 6)
+                        {
+                            System.Threading.Thread.Sleep(300000); // Wait for 5 minutes
+                            waitForToken++;
+                        }
+                    }
 
                     sLatestFile = lastFileSavedFromConfig;
                     foreach(string currFile in FilesOnSource.Keys)
@@ -179,13 +194,9 @@ namespace SynchS3LocalFolder
                         {
                             if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
                                 transfer.Download(dirName + "\\" + currFile, sSourceBucketName + "/" + sSourceBucketPrefix, currFile);
-                                if(synchToTarget)
-                                    transfer.Download("SynchToken.pmu", sSourceBucketName + "/" + sSourceBucketPrefix, "SynchToken.pmu");
                             else // Local folder is the source
                             {
                                 transfer.Upload(dirName + "/" + currFile, sTargetBucketName + "/" + sTargetBucketPrefix, currFile);
-                                if(synchToTarget)
-                                    transfer.Upload("SynchToken.pmu", sTargetBucketName + "/" + sTargetBucketPrefix, "SynchToken.pmu");
                             }
                         }
                         else
@@ -194,11 +205,11 @@ namespace SynchS3LocalFolder
                             if (currFile.Length > 18)
                                 if (currFile.Substring(0, 19) == "ppa_archive_2015-03")
                                 {
-                                    request.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
-                                    request.SourceKey = currFile;
-                                    request.DestinationBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
-                                    request.DestinationKey = currFile;
-                                    response = client.CopyObject(request);
+                                    copyRequest.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
+                                    copyRequest.SourceKey = currFile;
+                                    copyRequest.DestinationBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
+                                    copyRequest.DestinationKey = currFile;
+                                    copyResponse = client.CopyObject(copyRequest);
                                 }
                             // ------------------------------------------------------------------------------------
                             //request.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
@@ -222,11 +233,25 @@ namespace SynchS3LocalFolder
                         }
                         else
                         {
-                            request.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
-                            request.SourceKey = "SynchToken.pmu";
-                            request.DestinationBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
-                            request.DestinationKey = "SynchToken.pmu";
-                            response = client.CopyObject(request);
+                            copyRequest.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
+                            copyRequest.SourceKey = "SynchToken.pmu";
+                            copyRequest.DestinationBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
+                            copyRequest.DestinationKey = "SynchToken.pmu";
+                            copyResponse = client.CopyObject(copyRequest);
+                        }
+                    }
+
+                    if (SynchToSource)
+                    {
+                        if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
+                        {
+                            deleteRequest.BucketName = sSourceBucketName + "/" + sSourceBucketPrefix;
+                            deleteRequest.Key = "SynchToken.pmu";
+                            client.DeleteObject(deleteRequest);
+                        }
+                        else // Local folder is the source
+                        {
+                            System.IO.File.Delete(dirName + "\\SynchToken.pmu");
                         }
                     }
 
