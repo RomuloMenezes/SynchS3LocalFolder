@@ -192,18 +192,41 @@ namespace SynchS3LocalFolder
                     {
                         if (bLocalFilesPresent)
                         {
-                            if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
-                                transfer.Download(dirName + "\\" + currFile, sSourceBucketName + "/" + sSourceBucketPrefix, currFile);
-                            else // Local folder is the source
+                            if(loadAll)
                             {
-                                transfer.Upload(dirName + "/" + currFile, sTargetBucketName + "/" + sTargetBucketPrefix, currFile);
+                                if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
+                                    transfer.Download(dirName + "\\" + currFile, sSourceBucketName + "/" + sSourceBucketPrefix, currFile);
+                                else // Local folder is the source
+                                {
+                                    transfer.Upload(dirName + "/" + currFile, sTargetBucketName + "/" + sTargetBucketPrefix, currFile);
+                                }
+                            }
+                            else
+                            {
+                                if(loadNew && String.Compare(currFile, lastFileSavedFromConfig)>0)
+                                {
+                                    if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
+                                        transfer.Download(dirName + "\\" + currFile, sSourceBucketName + "/" + sSourceBucketPrefix, currFile);
+                                    else // Local folder is the source
+                                    {
+                                        transfer.Upload(dirName + "/" + currFile, sTargetBucketName + "/" + sTargetBucketPrefix, currFile);
+                                    }
+                                }
                             }
                         }
                         else
                         {
-                            // ---------------------------------- Temporary code ----------------------------------
-                            if (currFile.Length > 18)
-                                if (currFile.Substring(0, 19) == "ppa_archive_2015-03")
+                            if (loadAll)
+                            {
+                                copyRequest.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
+                                copyRequest.SourceKey = currFile;
+                                copyRequest.DestinationBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
+                                copyRequest.DestinationKey = currFile;
+                                copyResponse = client.CopyObject(copyRequest);
+                            }
+                            else
+                            {
+                                if (loadNew && String.Compare(currFile, lastFileSavedFromConfig) > 0)
                                 {
                                     copyRequest.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
                                     copyRequest.SourceKey = currFile;
@@ -211,12 +234,7 @@ namespace SynchS3LocalFolder
                                     copyRequest.DestinationKey = currFile;
                                     copyResponse = client.CopyObject(copyRequest);
                                 }
-                            // ------------------------------------------------------------------------------------
-                            //request.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
-                            //request.SourceKey = currFile;
-                            //request.DestinationBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
-                            //request.DestinationKey = currFile;
-                            //response = client.CopyObject(request);
+                            }
                         }
                     }
 
