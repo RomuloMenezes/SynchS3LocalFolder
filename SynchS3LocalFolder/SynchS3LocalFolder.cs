@@ -43,6 +43,8 @@ namespace SynchS3LocalFolder
             int waitForToken = 0;
 
             string lastFileSavedFromConfig = ConfigurationManager.AppSettings["LastFileSaved"];
+
+            Console.WriteLine("LastFileSaved read from App.Config: " + lastFileSavedFromConfig);
             
             if (args.Length == 0)
             {
@@ -209,6 +211,8 @@ namespace SynchS3LocalFolder
 
                         }
                     }
+
+                    Console.WriteLine("LastFileSaved to be saves to App.Config: " + sLatestFile);
 
                     foreach(string currFile in FilesToCopy.Keys)
                     {
