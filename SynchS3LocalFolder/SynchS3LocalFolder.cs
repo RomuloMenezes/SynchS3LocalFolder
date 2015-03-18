@@ -38,7 +38,7 @@ namespace SynchS3LocalFolder
             bool synchToTarget = false;
             bool SynchToSource = false;
             bool loadNew = false;
-            bool loadAll = false;
+            bool loadAll = true; // Set to true in case no 3rd or 4th parameters are passed. In that case, assume load all.
             string sLatestFile = "";
             int waitForToken = 0;
 
