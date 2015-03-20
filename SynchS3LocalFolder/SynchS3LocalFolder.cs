@@ -38,7 +38,7 @@ namespace SynchS3LocalFolder
             bool synchToTarget = false;
             bool SynchToSource = false;
             bool loadNew = false;
-            bool loadAll = false;
+            bool loadAll = true; // Set to true in case no 3rd or 4th parameters are passed. In that case, assume load all.
             string sLatestFile = "";
             int waitForToken = 0;
 
@@ -84,11 +84,33 @@ namespace SynchS3LocalFolder
                         iBackSlashIndex = args[1].IndexOf('/', 5);
                         sTargetBucketName = args[1].Substring(5, iBackSlashIndex - 5);
                         sTargetBucketPrefix = args[1].Substring(iBackSlashIndex + 1, args[1].Length - iBackSlashIndex - 1);
+
+                        // ---------- Checking if target bucket exists. If it doesn't, create it ----------
+                        GetObjectRequest checkBucketRequest = new GetObjectRequest();
+                        checkBucketRequest.BucketName = sTargetBucketName + "/" + sTargetBucketPrefix;
+                        try
+                        {
+                            GetObjectResponse response = client.GetObject(checkBucketRequest);
+                        }
+                        catch // Target bucket does not exist. The code within the following catch creates it.
+                        {
+                            PutBucketRequest createBucketRequest = new PutBucketRequest();
+                            createBucketRequest.BucketName = sTargetBucketName + "/" + sTargetBucketPrefix + "/";
+                            client.PutBucket(createBucketRequest);
+                        }
+                        // --------------------------------------------------------------------------------
+
                         FilesOnTarget = GetS3Files(client, sTargetBucketName, sTargetBucketPrefix);
                     }
                     else
                     {
                         dirName = args[1];
+
+                        // ---------- Checking if target folder exists. If it doesn't, create it ----------
+                        if (!Directory.Exists(dirName))
+                            Directory.CreateDirectory(dirName);
+                        // --------------------------------------------------------------------------------
+
                         FilesOnTarget = GetLocalFiles(dirName);
                         bLocalFilesPresent = true;
                     }
@@ -171,7 +193,7 @@ namespace SynchS3LocalFolder
 
                     if(SynchToSource)
                     {
-                        while(!FilesOnTarget.ContainsKey("SynchToken.pmu") && waitForToken < 6)
+                        while(!FilesOnSource.ContainsKey("SynchToken.pmu") && waitForToken < 6)
                         {
                             System.Threading.Thread.Sleep(300000); // Wait for 5 minutes
                             waitForToken++;
@@ -229,7 +251,7 @@ namespace SynchS3LocalFolder
                                 copyResponse = client.CopyObject(copyRequest);
                             }
                             else
-                            {
+                             {
                                 if (loadNew && String.Compare(currFile, lastFileSavedFromConfig) > 0)
                                 {
                                     copyRequest.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
