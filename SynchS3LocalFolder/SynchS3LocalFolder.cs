@@ -42,9 +42,12 @@ namespace SynchS3LocalFolder
             string sLatestFile = "";
             int waitForToken = 0;
 
-            string lastFileSavedFromConfig = ConfigurationManager.AppSettings["LastFileSaved"];
+            // Recovering last file saved
+            StreamReader MyReader = new StreamReader("LastFile.pmu");
+            string lastFileSavedFromFile = MyReader.ReadLine();
+            MyReader.Close();
 
-            Console.WriteLine("LastFileSaved read from App.Config: " + lastFileSavedFromConfig);
+            Console.WriteLine("LastFileSaved read from App.Config: " + lastFileSavedFromFile);
             
             if (args.Length == 0)
             {
@@ -200,7 +203,7 @@ namespace SynchS3LocalFolder
                         }
                     }
 
-                    sLatestFile = lastFileSavedFromConfig;
+                    sLatestFile = lastFileSavedFromFile;
                     foreach(string currFile in FilesOnSource.Keys)
                     {
                         if (!FilesOnTarget.ContainsKey(currFile))
@@ -229,7 +232,7 @@ namespace SynchS3LocalFolder
                             }
                             else
                             {
-                                if(loadNew && String.Compare(currFile, lastFileSavedFromConfig)>0)
+                                if(loadNew && String.Compare(currFile, lastFileSavedFromFile)>0)
                                 {
                                     if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
                                         transfer.Download(dirName + "\\" + currFile, sSourceBucketName + "/" + sSourceBucketPrefix, currFile);
@@ -252,7 +255,7 @@ namespace SynchS3LocalFolder
                             }
                             else
                              {
-                                if (loadNew && String.Compare(currFile, lastFileSavedFromConfig) > 0)
+                                if (loadNew && String.Compare(currFile, lastFileSavedFromFile) > 0)
                                 {
                                     copyRequest.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
                                     copyRequest.SourceKey = currFile;
@@ -299,12 +302,10 @@ namespace SynchS3LocalFolder
                         }
                     }
 
-                    // Storing last file saved on app.config
-                    // Remember this DOES NOT work when running on debug mode.
-                    Configuration configuration = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                    configuration.AppSettings.Settings["LastFileSaved"].Value = sLatestFile;
-                    configuration.Save();
-                    ConfigurationManager.RefreshSection("appSettings");
+                    // Storing last file saved
+                    StreamWriter MyWriter = new StreamWriter("LastFile.pmu");
+                    MyWriter.Write(sLatestFile);
+                    MyWriter.Close();
 
                 } // end try
                 catch (Exception e)
