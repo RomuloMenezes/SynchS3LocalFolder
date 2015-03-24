@@ -38,7 +38,7 @@ namespace SynchS3LocalFolder
             bool synchToTarget = false;
             bool SynchToSource = false;
             bool loadNew = false;
-            bool loadAll = true; // Set to true in case no 3rd or 4th parameters are passed. In that case, assume load all.
+            bool loadAll = false;
             string sLatestFile = "";
             int waitForToken = 0;
 
@@ -192,6 +192,10 @@ namespace SynchS3LocalFolder
                             }
                         }
                     }
+
+                    if (!(loadAll || loadNew)) // Load all is default
+                        loadAll = true;
+
                     // ---------------------------------------------------------------------------------------------------------------------------
 
                     if(SynchToSource)
@@ -217,29 +221,44 @@ namespace SynchS3LocalFolder
 
                     Console.WriteLine("LastFileSaved to be saves to App.Config: " + sLatestFile);
 
+                    StreamWriter LogWriter = new StreamWriter("PMU.log", true); // Open appending
+                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd") + " - Begin generation.");
+
                     foreach(string currFile in FilesToCopy.Keys)
                     {
                         if (bLocalFilesPresent)
                         {
                             if(loadAll)
                             {
-                                if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
-                                    transfer.Download(dirName + "\\" + currFile, sSourceBucketName + "/" + sSourceBucketPrefix, currFile);
-                                else // Local folder is the source
-                                {
-                                    transfer.Upload(dirName + "/" + currFile, sTargetBucketName + "/" + sTargetBucketPrefix, currFile);
-                                }
-                            }
-                            else
-                            {
-                                if(loadNew && String.Compare(currFile, lastFileSavedFromFile)>0)
+                                try
                                 {
                                     if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
                                         transfer.Download(dirName + "\\" + currFile, sSourceBucketName + "/" + sSourceBucketPrefix, currFile);
                                     else // Local folder is the source
-                                    {
                                         transfer.Upload(dirName + "/" + currFile, sTargetBucketName + "/" + sTargetBucketPrefix, currFile);
+                                }
+                                catch (Exception e)
+                                {
+                                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd") + " - File " + currFile + " NOT COPPIED!!!");
+                                }
+                            }
+                            else
+                            {
+                                try
+                                {
+                                    if (loadNew && String.Compare(currFile, lastFileSavedFromFile) > 0)
+                                    {
+                                        if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
+                                            transfer.Download(dirName + "\\" + currFile, sSourceBucketName + "/" + sSourceBucketPrefix, currFile);
+                                        else // Local folder is the source
+                                        {
+                                            transfer.Upload(dirName + "/" + currFile, sTargetBucketName + "/" + sTargetBucketPrefix, currFile);
+                                        }
                                     }
+                                }
+                                catch (Exception e)
+                                {
+                                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd") + " - File " + currFile + " NOT COPPIED!!!");
                                 }
                             }
                         }
@@ -306,6 +325,9 @@ namespace SynchS3LocalFolder
                     StreamWriter MyWriter = new StreamWriter("LastFile.pmu");
                     MyWriter.Write(sLatestFile);
                     MyWriter.Close();
+
+                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd") + " - End of generation.");
+                    LogWriter.Close();
 
                 } // end try
                 catch (Exception e)
