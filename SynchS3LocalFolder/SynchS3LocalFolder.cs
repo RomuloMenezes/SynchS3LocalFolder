@@ -41,9 +41,10 @@ namespace SynchS3LocalFolder
             bool loadAll = false;
             string sLatestFile = "";
             int waitForToken = 0;
+            string appFolder = AppDomain.CurrentDomain.BaseDirectory;
 
             // Recovering last file saved
-            StreamReader MyReader = new StreamReader("LastFile.pmu");
+            StreamReader MyReader = new StreamReader(appFolder + "LastFile.pmu");
             string lastFileSavedFromFile = MyReader.ReadLine();
             MyReader.Close();
 
@@ -221,7 +222,7 @@ namespace SynchS3LocalFolder
 
                     Console.WriteLine("LastFileSaved to be saves to App.Config: " + sLatestFile);
 
-                    StreamWriter LogWriter = new StreamWriter("PMU.log", true); // Open appending
+                    StreamWriter LogWriter = new StreamWriter(appFolder + "\\PMU.log", true); // Open appending
                     LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd") + " - Begin generation.");
 
                     foreach(string currFile in FilesToCopy.Keys)
