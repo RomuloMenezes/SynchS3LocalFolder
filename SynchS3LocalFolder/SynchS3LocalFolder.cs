@@ -327,6 +327,7 @@ namespace SynchS3LocalFolder
                     MyWriter.Close();
 
                     LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd") + " - End of generation.");
+                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd") + " -------------------------------------");
                     LogWriter.Close();
 
                 } // end try
