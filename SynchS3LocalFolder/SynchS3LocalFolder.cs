@@ -223,7 +223,7 @@ namespace SynchS3LocalFolder
                     Console.WriteLine("LastFileSaved to be saves to App.Config: " + sLatestFile);
 
                     StreamWriter LogWriter = new StreamWriter(appFolder + "\\PMU.log", true); // Open appending
-                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd") + " - Begin generation.");
+                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Begin generation.");
 
                     foreach(string currFile in FilesToCopy.Keys)
                     {
@@ -240,7 +240,7 @@ namespace SynchS3LocalFolder
                                 }
                                 catch (Exception e)
                                 {
-                                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd") + " - File " + currFile + " NOT COPPIED!!!");
+                                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!!");
                                 }
                             }
                             else
@@ -259,23 +259,15 @@ namespace SynchS3LocalFolder
                                 }
                                 catch (Exception e)
                                 {
-                                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd") + " - File " + currFile + " NOT COPPIED!!!");
+                                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!!");
                                 }
                             }
                         }
                         else
                         {
-                            if (loadAll)
+                            try
                             {
-                                copyRequest.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
-                                copyRequest.SourceKey = currFile;
-                                copyRequest.DestinationBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
-                                copyRequest.DestinationKey = currFile;
-                                copyResponse = client.CopyObject(copyRequest);
-                            }
-                            else
-                             {
-                                if (loadNew && String.Compare(currFile, lastFileSavedFromFile) > 0)
+                                if (loadAll)
                                 {
                                     copyRequest.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
                                     copyRequest.SourceKey = currFile;
@@ -283,6 +275,21 @@ namespace SynchS3LocalFolder
                                     copyRequest.DestinationKey = currFile;
                                     copyResponse = client.CopyObject(copyRequest);
                                 }
+                                else
+                                {
+                                    if (loadNew && String.Compare(currFile, lastFileSavedFromFile) > 0)
+                                    {
+                                        copyRequest.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
+                                        copyRequest.SourceKey = currFile;
+                                        copyRequest.DestinationBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
+                                        copyRequest.DestinationKey = currFile;
+                                        copyResponse = client.CopyObject(copyRequest);
+                                    }
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!!");
                             }
                         }
                     }
@@ -323,12 +330,12 @@ namespace SynchS3LocalFolder
                     }
 
                     // Storing last file saved
-                    StreamWriter MyWriter = new StreamWriter("LastFile.pmu");
+                    StreamWriter MyWriter = new StreamWriter(appFolder + "LastFile.pmu");
                     MyWriter.Write(sLatestFile);
                     MyWriter.Close();
 
-                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd") + " - End of generation.");
-                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd") + " -------------------------------------");
+                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - End of generation.");
+                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " -------------------------------------");
                     LogWriter.Close();
 
                 } // end try
