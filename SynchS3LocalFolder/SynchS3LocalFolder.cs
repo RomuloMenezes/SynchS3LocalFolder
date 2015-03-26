@@ -48,6 +48,11 @@ namespace SynchS3LocalFolder
             string lastFileSavedFromFile = MyReader.ReadLine();
             MyReader.Close();
 
+            // DEBUG ---------------------------------------------------------------------------------------------------------------------
+            StreamWriter debugWriter = new StreamWriter("D:\\C# Projects\\SynchS3LocalFolder\\SynchS3LocalFolder\\bin\\Debug\\Debug.pmu");
+            debugWriter.Write(appFolder);
+            // DEBUG ---------------------------------------------------------------------------------------------------------------------
+
             Console.WriteLine("LastFileSaved read from App.Config: " + lastFileSavedFromFile);
             
             if (args.Length == 0)
@@ -329,7 +334,12 @@ namespace SynchS3LocalFolder
                         }
                     }
 
+                    // DEBUG ---------------------------------------------------------------------------------------------------------------------
+                    debugWriter.Write(appFolder);
+                    // DEBUG ---------------------------------------------------------------------------------------------------------------------
+
                     // Storing last file saved
+                    System.IO.File.Delete(appFolder + "LastFile.pmu");
                     StreamWriter MyWriter = new StreamWriter(appFolder + "LastFile.pmu");
                     MyWriter.Write(sLatestFile);
                     MyWriter.Close();
