@@ -42,19 +42,13 @@ namespace SynchS3LocalFolder
             string sLatestFile = "";
             int waitForToken = 0;
             string appFolder = AppDomain.CurrentDomain.BaseDirectory;
-            string targetFile = "";
 
             // Recovering last file saved
             StreamReader MyReader = new StreamReader(appFolder + "LastFile.pmu");
             string lastFileSavedFromFile = MyReader.ReadLine();
             MyReader.Close();
 
-            // DEBUG ---------------------------------------------------------------------------------------------------------------------
-            StreamWriter debugWriter = new StreamWriter("D:\\C# Projects\\SynchS3LocalFolder\\SynchS3LocalFolder\\bin\\Debug\\Debug.pmu");
-            debugWriter.Write(appFolder);
-            // DEBUG ---------------------------------------------------------------------------------------------------------------------
-
-            Console.WriteLine("LastFileSaved read from App.Config: " + lastFileSavedFromFile);
+            // Console.WriteLine("LastFileSaved read from App.Config: " + lastFileSavedFromFile);
             
             if (args.Length == 0)
             {
@@ -219,34 +213,27 @@ namespace SynchS3LocalFolder
                     {
                         if (!FilesOnTarget.ContainsKey(currFile))
                         {
-                            // If the file ppa_archive.d is being copied from a local folder it might happen that it's being copied from
-                            // the archive path. Since the file being copied gets locked, and the openPDC process may need to access
-                            // ppa_archive.d, a copy of it must be made, and actually the copy is moved to destiny.
+                            // The file ppa_archive.d accumulates the real time data until it reaches a size limit. Then it's renamed to specify
+                            // the data horizon it contains, and a new ppa_archive.d is created, and goes on accumulating real time data.
+                            // Since it is a temporary file, and copying it may cause lock file conflict with the openPDC process - because AWS
+                            // api locks the file being copied - this particular file will be excluded from the synching process.
 
-                            if (currFile == "ppa_archive.d" && args[0].Substring(0, 5) != "s3://" && args[0].Substring(0, 5) != "S3://")
+                            if (currFile != "ppa_archive.d")
                             {
-                                System.IO.File.Copy(dirName + "\\" + currFile, dirName + "\\" + currFile + ".copy");
-                                FilesToCopy.Add(currFile + ".copy", currFile + ".copy");
-                            }
-                            else
                                 FilesToCopy.Add(currFile, currFile);
-                            if (String.Compare(currFile, sLatestFile, true) > 0 && currFile.Substring(currFile.Length-2,2) == ".d")
-                                sLatestFile = currFile;
-
+                                if (String.Compare(currFile, sLatestFile, true) > 0 && currFile.Substring(currFile.Length - 2, 2) == ".d")
+                                    sLatestFile = currFile;
+                            }
                         }
                     }
 
-                    Console.WriteLine("LastFileSaved to be saves to App.Config: " + sLatestFile);
+                    // Console.WriteLine("LastFileSaved to be saves to App.Config: " + sLatestFile);
 
                     StreamWriter LogWriter = new StreamWriter(appFolder + "\\PMU.log", true); // Open appending
                     LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Begin generation.");
 
                     foreach(string currFile in FilesToCopy.Keys)
                     {
-                        if (currFile == "ppa_archive.d.copy")
-                            targetFile = "ppa_archive.d";
-                        else
-                            targetFile = currFile;
                         if (bLocalFilesPresent)
                         {
                             if(loadAll)
@@ -254,9 +241,9 @@ namespace SynchS3LocalFolder
                                 try
                                 {
                                     if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
-                                        transfer.Download(dirName + "\\" + targetFile, sSourceBucketName + "/" + sSourceBucketPrefix, currFile);
+                                        transfer.Download(dirName + "\\" + currFile, sSourceBucketName + "/" + sSourceBucketPrefix, currFile);
                                     else // Local folder is the source
-                                        transfer.Upload(dirName + "/" + currFile, sTargetBucketName + "/" + sTargetBucketPrefix, targetFile);
+                                        transfer.Upload(dirName + "/" + currFile, sTargetBucketName + "/" + sTargetBucketPrefix, currFile);
                                 }
                                 catch (Exception e)
                                 {
@@ -270,10 +257,10 @@ namespace SynchS3LocalFolder
                                     if (loadNew && String.Compare(currFile, lastFileSavedFromFile) > 0)
                                     {
                                         if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
-                                            transfer.Download(dirName + "\\" + targetFile, sSourceBucketName + "/" + sSourceBucketPrefix, currFile);
+                                            transfer.Download(dirName + "\\" + currFile, sSourceBucketName + "/" + sSourceBucketPrefix, currFile);
                                         else // Local folder is the source
                                         {
-                                            transfer.Upload(dirName + "/" + currFile, sTargetBucketName + "/" + sTargetBucketPrefix, targetFile);
+                                            transfer.Upload(dirName + "/" + currFile, sTargetBucketName + "/" + sTargetBucketPrefix, currFile);
                                         }
                                     }
                                 }
@@ -292,7 +279,7 @@ namespace SynchS3LocalFolder
                                     copyRequest.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
                                     copyRequest.SourceKey = currFile;
                                     copyRequest.DestinationBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
-                                    copyRequest.DestinationKey = targetFile;
+                                    copyRequest.DestinationKey = currFile;
                                     copyResponse = client.CopyObject(copyRequest);
                                 }
                                 else
@@ -302,7 +289,7 @@ namespace SynchS3LocalFolder
                                         copyRequest.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
                                         copyRequest.SourceKey = currFile;
                                         copyRequest.DestinationBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
-                                        copyRequest.DestinationKey = targetFile;
+                                        copyRequest.DestinationKey = currFile;
                                         copyResponse = client.CopyObject(copyRequest);
                                     }
                                 }
@@ -349,10 +336,6 @@ namespace SynchS3LocalFolder
                         }
                     }
 
-                    // DEBUG ---------------------------------------------------------------------------------------------------------------------
-                    debugWriter.Write(appFolder);
-                    // DEBUG ---------------------------------------------------------------------------------------------------------------------
-
                     // Storing last file saved
                     System.IO.File.Delete(appFolder + "LastFile.pmu");
                     StreamWriter MyWriter = new StreamWriter(appFolder + "LastFile.pmu");
@@ -362,10 +345,6 @@ namespace SynchS3LocalFolder
                     LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - End of generation.");
                     LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " -------------------------------------");
                     LogWriter.Close();
-                    debugWriter.Close();
-
-                    if (System.IO.File.Exists(dirName + "\\ppa_archive.d.copy"))
-                        System.IO.File.Delete(dirName + "\\ppa_archive.d.copy");
 
                 } // end try
                 catch (Exception e)
