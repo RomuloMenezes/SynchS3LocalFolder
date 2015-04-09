@@ -199,12 +199,22 @@ namespace SynchS3LocalFolder
 
                     // ---------------------------------------------------------------------------------------------------------------------------
 
+                    StreamWriter LogWriter = new StreamWriter(appFolder + "\\PMU.log", true); // Open appending
+                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Begin generation.");
+
                     if(SynchToSource)
                     {
                         while(!FilesOnSource.ContainsKey("SynchToken.pmu") && waitForToken < 6)
                         {
                             System.Threading.Thread.Sleep(300000); // Wait for 5 minutes
                             waitForToken++;
+                        }
+                        if(waitForToken == 6)
+                        {
+                            LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - TIMEOUT!!! EXECUTION ABORTED.");
+                            LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " -------------------------------------");
+                            LogWriter.Close();
+                            return;
                         }
                     }
 
@@ -227,10 +237,9 @@ namespace SynchS3LocalFolder
                         }
                     }
 
-                    // Console.WriteLine("LastFileSaved to be saves to App.Config: " + sLatestFile);
-
-                    StreamWriter LogWriter = new StreamWriter(appFolder + "\\PMU.log", true); // Open appending
-                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Begin generation.");
+                    FilesToCopy.Add("ppa_dbase.dat", "ppa_dbase.dat");
+                    FilesToCopy.Add("ppa_startup.dat", "ppa_startup.dat");
+                    FilesToCopy.Add("scratch.dat", "scratch.dat");
 
                     foreach(string currFile in FilesToCopy.Keys)
                     {
