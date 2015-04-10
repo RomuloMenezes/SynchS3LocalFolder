@@ -237,7 +237,7 @@ namespace SynchS3LocalFolder
                             else
                             {
                                 FilesToCopy.Add(currFile, currFile);
-                                if (currFile != "z_ppa_archive.d")
+                                if (!currFile.StartsWith("z_"))
                                     if (String.Compare(currFile, sLatestFile, true) > 0 && currFile.Substring(currFile.Length - 2, 2) == ".d")
                                         sLatestFile = currFile;
                             }
@@ -246,9 +246,12 @@ namespace SynchS3LocalFolder
                         {
                             // The .dat files, along with the ppa_archive.d file, are necessary for reading historic files. Since in most executions these files are
                             // already in the terget folder - and therefore, due to the if above, are not added to FilesToCopy - their copy is forced in the following
-                            // piece of code.
+                            // piece of code. Like the ppa_archive.d, they have to be copied in order to be treated.
                             if (currFile.EndsWith(".dat"))
-                                FilesToCopy.Add(currFile, currFile);
+                            {
+                                File.Copy(dirName + "\\" + currFile, dirName + "\\z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
+                                FilesToCopy.Add("z_" + currFile, "z_" + currFile);
+                            }
                         }
                     }
 
