@@ -230,7 +230,7 @@ namespace SynchS3LocalFolder
 
                             if (currFile == "ppa_archive.d")
                             {
-                                File.Copy(currFile, "z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
+                                File.Copy(dirName + "\\" + currFile, dirName + "\\z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
                                 FilesToCopy.Add("z_" + currFile, "z_" + currFile);
                             }
                             else
