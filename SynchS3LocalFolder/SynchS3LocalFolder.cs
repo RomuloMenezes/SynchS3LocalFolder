@@ -231,6 +231,8 @@ namespace SynchS3LocalFolder
 
                             if (currFile == "ppa_archive.d")
                             {
+                                if (File.Exists(dirName + "\\z_" + currFile))
+                                    File.Delete(dirName + "\\z_" + currFile);
                                 File.Copy(dirName + "\\" + currFile, dirName + "\\z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
                                 FilesToCopy.Add("z_" + currFile, "z_" + currFile);
                             }
@@ -249,6 +251,8 @@ namespace SynchS3LocalFolder
                             // piece of code. Like the ppa_archive.d, they have to be copied in order to be treated.
                             if (currFile.EndsWith(".dat"))
                             {
+                                if (File.Exists(dirName + "\\z_" + currFile))
+                                    File.Delete(dirName + "\\z_" + currFile);
                                 File.Copy(dirName + "\\" + currFile, dirName + "\\z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
                                 FilesToCopy.Add("z_" + currFile, "z_" + currFile);
                             }
