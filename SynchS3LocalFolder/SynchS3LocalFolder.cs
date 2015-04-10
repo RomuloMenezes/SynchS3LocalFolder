@@ -206,6 +206,7 @@ namespace SynchS3LocalFolder
                     {
                         while(!FilesOnSource.ContainsKey("SynchToken.pmu") && waitForToken < 6)
                         {
+                            LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Waiting for token. Attempt " + Convert.ToString(waitForToken + 1));
                             System.Threading.Thread.Sleep(300000); // Wait for 5 minutes
                             waitForToken++;
                         }
