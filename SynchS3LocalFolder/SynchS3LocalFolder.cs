@@ -209,6 +209,7 @@ namespace SynchS3LocalFolder
                             LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Waiting for token. Attempt " + Convert.ToString(waitForToken + 1));
                             System.Threading.Thread.Sleep(300000); // Wait for 5 minutes
                             waitForToken++;
+                            FilesOnSource = GetS3Files(client, sSourceBucketName, sSourceBucketPrefix);
                         }
                         if(waitForToken == 6)
                         {
@@ -236,8 +237,9 @@ namespace SynchS3LocalFolder
                             else
                             {
                                 FilesToCopy.Add(currFile, currFile);
-                                if (String.Compare(currFile, sLatestFile, true) > 0 && currFile.Substring(currFile.Length - 2, 2) == ".d")
-                                    sLatestFile = currFile;
+                                if (currFile != "z_ppa_archive.d")
+                                    if (String.Compare(currFile, sLatestFile, true) > 0 && currFile.Substring(currFile.Length - 2, 2) == ".d")
+                                        sLatestFile = currFile;
                             }
                         }
                         else
