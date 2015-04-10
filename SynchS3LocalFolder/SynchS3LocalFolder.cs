@@ -317,6 +317,7 @@ namespace SynchS3LocalFolder
                                 LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!!");
                             }
                         }
+                        Console.WriteLine(currFile + " copied.");
                     }
 
                     if(synchToTarget)
