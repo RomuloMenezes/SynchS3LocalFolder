@@ -223,23 +223,31 @@ namespace SynchS3LocalFolder
                     {
                         if (!FilesOnTarget.ContainsKey(currFile))
                         {
-                            // The file ppa_archive.d accumulates the real time data until it reaches a size limit. Then it's renamed to specify
-                            // the data horizon it contains, and a new ppa_archive.d is created, and goes on accumulating real time data.
-                            // Since it is a temporary file, and copying it may cause lock file conflict with the openPDC process - because AWS
-                            // api locks the file being copied - this particular file will be excluded from the synching process.
+                            // Copying the file ppa_archive.d may cause problems to the openPDC process, because the AWS API locks the file while it's being copied
+                            // and the openPDC process may try to rollover in the meantime. So, a copy of the file is made, and the copy is treated.
+                            // The ppa_archive.d, along with the .dat files, is necessary for reading historic files.
 
-                            if (currFile != "ppa_archive.d")
+                            if (currFile == "ppa_archive.d")
+                            {
+                                File.Copy(currFile, "z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
+                                FilesToCopy.Add("z_" + currFile, "z_" + currFile);
+                            }
+                            else
                             {
                                 FilesToCopy.Add(currFile, currFile);
                                 if (String.Compare(currFile, sLatestFile, true) > 0 && currFile.Substring(currFile.Length - 2, 2) == ".d")
                                     sLatestFile = currFile;
                             }
                         }
+                        else
+                        {
+                            // The .dat files, along with the ppa_archive.d file, are necessary for reading historic files. Since in most executions these files are
+                            // already in the terget folder - and therefore, due to the if above, are not added to FilesToCopy - their copy is forced in the following
+                            // piece of code.
+                            if (currFile.EndsWith(".dat"))
+                                FilesToCopy.Add(currFile, currFile);
+                        }
                     }
-
-                    FilesToCopy.Add("ppa_dbase.dat", "ppa_dbase.dat");
-                    FilesToCopy.Add("ppa_startup.dat", "ppa_startup.dat");
-                    FilesToCopy.Add("scratch.dat", "scratch.dat");
 
                     foreach(string currFile in FilesToCopy.Keys)
                     {
