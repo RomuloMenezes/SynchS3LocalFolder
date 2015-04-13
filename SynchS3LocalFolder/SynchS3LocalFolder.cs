@@ -249,12 +249,22 @@ namespace SynchS3LocalFolder
                             // The .dat files, along with the ppa_archive.d file, are necessary for reading historic files. Since in most executions these files are
                             // already in the terget folder - and therefore, due to the if above, are not added to FilesToCopy - their copy is forced in the following
                             // piece of code. Like the ppa_archive.d, they have to be copied in order to be treated.
-                            if (currFile.EndsWith(".dat"))
+                            if (currFile.EndsWith(".dat") && !currFile.StartsWith("z_"))
                             {
                                 if (File.Exists(dirName + "\\z_" + currFile))
                                     File.Delete(dirName + "\\z_" + currFile);
                                 File.Copy(dirName + "\\" + currFile, dirName + "\\z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
                                 FilesToCopy.Add("z_" + currFile, "z_" + currFile);
+                            }
+                            else
+                            {
+                                if (currFile == "ppa_archive.d")
+                                {
+                                    if (File.Exists(dirName + "\\z_" + currFile))
+                                        File.Delete(dirName + "\\z_" + currFile);
+                                    File.Copy(dirName + "\\" + currFile, dirName + "\\z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
+                                    FilesToCopy.Add("z_" + currFile, "z_" + currFile);
+                                }
                             }
                         }
                     }
@@ -326,7 +336,7 @@ namespace SynchS3LocalFolder
                                 LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!!");
                             }
                         }
-                        Console.WriteLine(currFile + " copied.");
+                        Console.WriteLine(currFile + " treated.");
                     }
 
                     if(synchToTarget)
