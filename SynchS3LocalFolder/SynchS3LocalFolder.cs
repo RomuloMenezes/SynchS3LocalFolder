@@ -23,6 +23,7 @@ namespace SynchS3LocalFolder
             Dictionary<string, string> FilesOnSource = new Dictionary<string, string>();
             Dictionary<string, string> FilesOnTarget = new Dictionary<string, string>();
             Dictionary<string, string> FilesToCopy = new Dictionary<string, string>();
+            Dictionary<string, string> z_Files = new Dictionary<string, string>();
             AmazonS3Client client = new AmazonS3Client(Amazon.RegionEndpoint.USEast1);
             TransferUtility transfer = new TransferUtility(client);
             int iBackSlashIndex;
@@ -232,14 +233,14 @@ namespace SynchS3LocalFolder
                             if (currFile == "ppa_archive.d")
                             {
                                 if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // Local folder is the source
+                                    FilesToCopy.Add(currFile, currFile);
+                                else
                                 {
                                     if (File.Exists(dirName + "\\z_" + currFile))
                                         File.Delete(dirName + "\\z_" + currFile);
                                     File.Copy(dirName + "\\" + currFile, dirName + "\\z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
                                     FilesToCopy.Add("z_" + currFile, "z_" + currFile);
                                 }
-                                else
-                                    FilesToCopy.Add(currFile, currFile);
                             }
                             else
                             {
@@ -266,14 +267,15 @@ namespace SynchS3LocalFolder
                                 if (currFile == "ppa_archive.d")
                                 {
                                     if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // Local folder is the source
+                                        FilesToCopy.Add(currFile, currFile);
+                                    else
                                     {
                                         if (File.Exists(dirName + "\\z_" + currFile))
                                             File.Delete(dirName + "\\z_" + currFile);
                                         File.Copy(dirName + "\\" + currFile, dirName + "\\z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
                                         FilesToCopy.Add("z_" + currFile, "z_" + currFile);
                                     }
-                                    else
-                                        FilesToCopy.Add(currFile, currFile);
+                                        
                                 }
                             }
                         }
@@ -384,6 +386,26 @@ namespace SynchS3LocalFolder
                         }
                     }
 
+                    // Deleting the z_ files on local storage and renaming them on S3
+                    if (!(args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://")) // Local storage is the source
+                    {
+                        z_Files = GetLocalFiles(dirName, "z_*");
+                        foreach(string z_File in z_Files.Keys)
+                        {
+                            copyRequest.SourceBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
+                            copyRequest.SourceKey = z_File;
+                            copyRequest.DestinationBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
+                            copyRequest.DestinationKey = z_File.Substring(2);
+                            copyResponse = client.CopyObject(copyRequest);
+
+                            deleteRequest.BucketName = sTargetBucketName + "/" + sTargetBucketPrefix;
+                            deleteRequest.Key = z_File;
+                            client.DeleteObject(deleteRequest);
+                            
+                            System.IO.File.Delete(dirName + "\\" + z_File);
+                        }
+                    }
+
                     // Storing last file saved
                     System.IO.File.Delete(appFolder + "LastFile.pmu");
                     StreamWriter MyWriter = new StreamWriter(appFolder + "LastFile.pmu");
@@ -409,6 +431,21 @@ namespace SynchS3LocalFolder
             string sLocalFilenameNoPath;
             Dictionary<string, string> LocalFiles = new Dictionary<string, string>();
             string[] fileEntries = Directory.GetFiles(dirName);
+            foreach (string sCurrFileName in fileEntries)
+            {
+                iBackSlashIndex = sCurrFileName.LastIndexOf('\\') + 1;
+                sLocalFilenameNoPath = sCurrFileName.Substring(iBackSlashIndex, sCurrFileName.Length - iBackSlashIndex);
+                LocalFiles.Add(sLocalFilenameNoPath, sLocalFilenameNoPath);
+            }
+            return LocalFiles;
+        }
+
+        private static Dictionary<string, string> GetLocalFiles(string dirName, string wildcard)
+        {
+            int iBackSlashIndex;
+            string sLocalFilenameNoPath;
+            Dictionary<string, string> LocalFiles = new Dictionary<string, string>();
+            string[] fileEntries = Directory.GetFiles(dirName, wildcard);
             foreach (string sCurrFileName in fileEntries)
             {
                 iBackSlashIndex = sCurrFileName.LastIndexOf('\\') + 1;
