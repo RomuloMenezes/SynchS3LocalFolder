@@ -231,10 +231,15 @@ namespace SynchS3LocalFolder
 
                             if (currFile == "ppa_archive.d")
                             {
-                                if (File.Exists(dirName + "\\z_" + currFile))
-                                    File.Delete(dirName + "\\z_" + currFile);
-                                File.Copy(dirName + "\\" + currFile, dirName + "\\z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
-                                FilesToCopy.Add("z_" + currFile, "z_" + currFile);
+                                if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // Local folder is the source
+                                {
+                                    if (File.Exists(dirName + "\\z_" + currFile))
+                                        File.Delete(dirName + "\\z_" + currFile);
+                                    File.Copy(dirName + "\\" + currFile, dirName + "\\z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
+                                    FilesToCopy.Add("z_" + currFile, "z_" + currFile);
+                                }
+                                else
+                                    FilesToCopy.Add(currFile, currFile);
                             }
                             else
                             {
@@ -260,10 +265,15 @@ namespace SynchS3LocalFolder
                             {
                                 if (currFile == "ppa_archive.d")
                                 {
-                                    if (File.Exists(dirName + "\\z_" + currFile))
-                                        File.Delete(dirName + "\\z_" + currFile);
-                                    File.Copy(dirName + "\\" + currFile, dirName + "\\z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
-                                    FilesToCopy.Add("z_" + currFile, "z_" + currFile);
+                                    if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // Local folder is the source
+                                    {
+                                        if (File.Exists(dirName + "\\z_" + currFile))
+                                            File.Delete(dirName + "\\z_" + currFile);
+                                        File.Copy(dirName + "\\" + currFile, dirName + "\\z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
+                                        FilesToCopy.Add("z_" + currFile, "z_" + currFile);
+                                    }
+                                    else
+                                        FilesToCopy.Add(currFile, currFile);
                                 }
                             }
                         }
