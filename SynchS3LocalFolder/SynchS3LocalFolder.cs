@@ -307,7 +307,7 @@ namespace SynchS3LocalFolder
                             {
                                 try
                                 {
-                                    if (loadNew && String.Compare(currFile, lastFileSavedFromFile) > 0)
+                                    if (loadNew && (String.Compare(currFile, lastFileSavedFromFile) > 0 || currFile == "ppa_archive.d"))
                                     {
                                         if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
                                             transfer.Download(dirName + "\\" + currFile, sSourceBucketName + "/" + sSourceBucketPrefix, currFile);
@@ -337,7 +337,7 @@ namespace SynchS3LocalFolder
                                 }
                                 else
                                 {
-                                    if (loadNew && String.Compare(currFile, lastFileSavedFromFile) > 0)
+                                    if (loadNew && (String.Compare(currFile, lastFileSavedFromFile) > 0 || currFile == "ppa_archive.d"))
                                     {
                                         copyRequest.SourceBucket = sSourceBucketName + "/" + sSourceBucketPrefix;
                                         copyRequest.SourceKey = currFile;
