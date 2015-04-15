@@ -257,10 +257,15 @@ namespace SynchS3LocalFolder
                             // piece of code. Like the ppa_archive.d, they have to be copied in order to be treated.
                             if (currFile.EndsWith(".dat") && !currFile.StartsWith("z_"))
                             {
-                                if (File.Exists(dirName + "\\z_" + currFile))
-                                    File.Delete(dirName + "\\z_" + currFile);
-                                File.Copy(dirName + "\\" + currFile, dirName + "\\z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
-                                FilesToCopy.Add("z_" + currFile, "z_" + currFile);
+                                if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // Local folder is the source
+                                    FilesToCopy.Add(currFile, currFile);
+                                else
+                                {
+                                    if (File.Exists(dirName + "\\z_" + currFile))
+                                        File.Delete(dirName + "\\z_" + currFile);
+                                    File.Copy(dirName + "\\" + currFile, dirName + "\\z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
+                                    FilesToCopy.Add("z_" + currFile, "z_" + currFile);
+                                }
                             }
                             else
                             {
@@ -274,8 +279,7 @@ namespace SynchS3LocalFolder
                                             File.Delete(dirName + "\\z_" + currFile);
                                         File.Copy(dirName + "\\" + currFile, dirName + "\\z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
                                         FilesToCopy.Add("z_" + currFile, "z_" + currFile);
-                                    }
-                                        
+                                    }                                      
                                 }
                             }
                         }
