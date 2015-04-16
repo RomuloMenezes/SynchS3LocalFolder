@@ -300,7 +300,7 @@ namespace SynchS3LocalFolder
                                 }
                                 catch (Exception e)
                                 {
-                                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!!");
+                                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!! " + e.Message);
                                 }
                             }
                             else
@@ -319,7 +319,7 @@ namespace SynchS3LocalFolder
                                 }
                                 catch (Exception e)
                                 {
-                                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!!");
+                                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!! " + e.Message);
                                 }
                             }
                         }
@@ -349,7 +349,7 @@ namespace SynchS3LocalFolder
                             }
                             catch (Exception e)
                             {
-                                LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!!");
+                                LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!! " + e.Message);
                             }
                         }
                         Console.WriteLine(currFile + " treated.");
