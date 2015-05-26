@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
+using System.ServiceProcess;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
@@ -43,6 +44,7 @@ namespace SynchS3LocalFolder
             string sLatestFile = "";
             int waitForToken = 0;
             string appFolder = AppDomain.CurrentDomain.BaseDirectory;
+            string sServiceStatus = "";
 
             // Recovering last file saved
             StreamReader MyReader = new StreamReader(appFolder + "LastFile.pmu");
@@ -301,6 +303,8 @@ namespace SynchS3LocalFolder
                                 catch (Exception e)
                                 {
                                     LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!! " + e.Message);
+                                    sServiceStatus = GetServiceStatus("openPDC");
+                                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Service was " + sServiceStatus);
                                 }
                             }
                             else
@@ -320,6 +324,8 @@ namespace SynchS3LocalFolder
                                 catch (Exception e)
                                 {
                                     LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!! " + e.Message);
+                                    sServiceStatus = GetServiceStatus("openPDC");
+                                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Service was " + sServiceStatus);
                                 }
                             }
                         }
@@ -350,6 +356,8 @@ namespace SynchS3LocalFolder
                             catch (Exception e)
                             {
                                 LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!! " + e.Message);
+                                sServiceStatus = GetServiceStatus("openPDC");
+                                LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Service was " + sServiceStatus);
                             }
                         }
                         Console.WriteLine(currFile + " treated.");
@@ -493,6 +501,27 @@ namespace SynchS3LocalFolder
 
             } while (request != null);
             return S3Files;
+        }
+
+        private static string GetServiceStatus(string serviceName)
+        {
+            ServiceController sc = new ServiceController(serviceName);
+
+            switch (sc.Status)
+            {
+                case ServiceControllerStatus.Running:
+                    return "Running";
+                case ServiceControllerStatus.Stopped:
+                    return "Stopped";
+                case ServiceControllerStatus.Paused:
+                    return "Paused";
+                case ServiceControllerStatus.StopPending:
+                    return "Stopping";
+                case ServiceControllerStatus.StartPending:
+                    return "Starting";
+                default:
+                    return "Status Changing";
+            }
         }
     }
 }
