@@ -45,6 +45,7 @@ namespace SynchS3LocalFolder
             int waitForToken = 0;
             string appFolder = AppDomain.CurrentDomain.BaseDirectory;
             string sServiceStatus = "";
+            string sParams = "";
 
             // Recovering last file saved
             StreamReader MyReader = new StreamReader(appFolder + "LastFile.pmu");
@@ -83,6 +84,8 @@ namespace SynchS3LocalFolder
                         FilesOnSource = GetLocalFiles(dirName);
                         bLocalFilesPresent = true;
                     }
+
+                    sParams = args[0];
                     // ---------------------------------------------------------------------------------------------------------------------------
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
                     // ---------------------------------------------- Target location (parameter 2) ----------------------------------------------
@@ -121,6 +124,8 @@ namespace SynchS3LocalFolder
                         FilesOnTarget = GetLocalFiles(dirName);
                         bLocalFilesPresent = true;
                     }
+
+                    sParams += " " + args[1];
                     // ---------------------------------------------------------------------------------------------------------------------------
 
                     // --------------------------------------------------- Parameters 3 and 4 ----------------------------------------------------
@@ -155,6 +160,7 @@ namespace SynchS3LocalFolder
                                 loadAll = true;
                                 break;
                         }
+                        sParams += " " + args[2];
                     }
                     else
                     {
@@ -195,6 +201,7 @@ namespace SynchS3LocalFolder
                                     break;
                             }
                         }
+                        sParams += " " + args[2] + " " + args[3];
                     }
 
                     if (!(loadAll || loadNew)) // Load all is default
@@ -204,6 +211,7 @@ namespace SynchS3LocalFolder
 
                     StreamWriter LogWriter = new StreamWriter(appFolder + "\\PMU.log", true); // Open appending
                     LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Begin generation.");
+                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Parameters: " + sParams);
 
                     if(SynchToSource)
                     {
