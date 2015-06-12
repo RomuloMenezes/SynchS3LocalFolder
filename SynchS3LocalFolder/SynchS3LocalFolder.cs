@@ -275,9 +275,9 @@ namespace SynchS3LocalFolder
                             // The .dat files, along with the ppa_archive.d file, are necessary for reading historic files. Since in most executions these files are
                             // already in the terget folder - and therefore, due to the if above, are not added to FilesToCopy - their copy is forced in the following
                             // piece of code. Like the ppa_archive.d, they have to be copied in order to be treated.
-                            if (currFile.EndsWith(".dat") && !currFile.StartsWith("z_"))
+                            if ((currFile.EndsWith(".dat") && !currFile.StartsWith("z_") || currFile == "ppa_archive.d"))
                             {
-                                if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // Local folder is the source
+                                if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
                                     FilesToCopy.Add(currFile, currFile);
                                 else
                                 {
@@ -287,21 +287,21 @@ namespace SynchS3LocalFolder
                                     FilesToCopy.Add("z_" + currFile, "z_" + currFile);
                                 }
                             }
-                            else
-                            {
-                                if (currFile == "ppa_archive.d")
-                                {
-                                    if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // Local folder is the source
-                                        FilesToCopy.Add(currFile, currFile);
-                                    else
-                                    {
-                                        if (File.Exists(dirName + "\\z_" + currFile))
-                                            File.Delete(dirName + "\\z_" + currFile);
-                                        File.Copy(dirName + "\\" + currFile, dirName + "\\z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
-                                        FilesToCopy.Add("z_" + currFile, "z_" + currFile);
-                                    }                                      
-                                }
-                            }
+                            //else
+                            //{
+                            //    if (currFile == "ppa_archive.d")
+                            //    {
+                            //        if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // Local folder is the source
+                            //            FilesToCopy.Add(currFile, currFile);
+                            //        else
+                            //        {
+                            //            if (File.Exists(dirName + "\\z_" + currFile))
+                            //                File.Delete(dirName + "\\z_" + currFile);
+                            //            File.Copy(dirName + "\\" + currFile, dirName + "\\z_" + currFile); // Use "prefix" z_ so that this file name is greater than lastFileSavedFromFile
+                            //            FilesToCopy.Add("z_" + currFile, "z_" + currFile);
+                            //        }                                      
+                            //    }
+                            //}
                         }
                     }
 
