@@ -47,10 +47,16 @@ namespace SynchS3LocalFolder
             string sServiceStatus = "";
             string sParams = "";
 
+            StreamWriter LogWriter = new StreamWriter(appFolder + "\\PMU.log", true); // Open appending
+            LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - >>> DEBUG <<< Begin execution >>>");
+
             // Recovering last file saved
             StreamReader MyReader = new StreamReader(appFolder + "LastFile.pmu");
             string lastFileSavedFromFile = MyReader.ReadLine();
             MyReader.Close();
+
+            // StreamWriter LogWriter = new StreamWriter(appFolder + "\\PMU.log", true); // Open appending
+            LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Last file read: " + lastFileSavedFromFile);
 
             // Console.WriteLine("LastFileSaved read from App.Config: " + lastFileSavedFromFile);
             
@@ -128,6 +134,8 @@ namespace SynchS3LocalFolder
                     sParams += " " + args[1];
                     // ---------------------------------------------------------------------------------------------------------------------------
 
+                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Parameters 1 and 2 read.");
+
                     // --------------------------------------------------- Parameters 3 and 4 ----------------------------------------------------
                     // Parameters 3 and 4 are optional and the order in which they are passed is irrelevant. They are flags that determine:
                     //
@@ -204,12 +212,14 @@ namespace SynchS3LocalFolder
                         sParams += " " + args[2] + " " + args[3];
                     }
 
+                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Parameters 3 and 4 treated.");
+
                     if (!(loadAll || loadNew)) // Load all is default
                         loadAll = true;
 
                     // ---------------------------------------------------------------------------------------------------------------------------
 
-                    StreamWriter LogWriter = new StreamWriter(appFolder + "\\PMU.log", true); // Open appending
+                    // StreamWriter LogWriter = new StreamWriter(appFolder + "\\PMU.log", true); // Open appending
                     LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Begin generation.");
                     LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Parameters: " + sParams);
 
