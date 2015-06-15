@@ -427,15 +427,15 @@ namespace SynchS3LocalFolder
                             copyRequest.DestinationBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
                             copyRequest.DestinationKey = z_File.Substring(2);
                             copyResponse = client.CopyObject(copyRequest);
-                            LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - " + z_File + "renamed on S3");
+                            LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - " + z_File + " renamed on S3");
 
                             deleteRequest.BucketName = sTargetBucketName + "/" + sTargetBucketPrefix;
                             deleteRequest.Key = z_File;
                             client.DeleteObject(deleteRequest);
-                            LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - " + z_File + "deleted from S3");
+                            LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - " + z_File + " deleted from S3");
                             
                             System.IO.File.Delete(dirName + "\\" + z_File);
-                            LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - " + z_File + "deleted from local folder");
+                            LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - " + z_File + " deleted from local folder");
                         }
                     }
 
