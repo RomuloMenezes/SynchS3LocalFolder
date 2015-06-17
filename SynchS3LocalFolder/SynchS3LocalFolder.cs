@@ -46,17 +46,28 @@ namespace SynchS3LocalFolder
             string appFolder = AppDomain.CurrentDomain.BaseDirectory;
             string sServiceStatus = "";
             string sParams = "";
+            AppendOnFile LogWriter = new AppendOnFile();
+            StringBuilder sTextToAppend = new StringBuilder();
 
-            StreamWriter LogWriter = new StreamWriter(appFolder + "\\PMU.log", true); // Open appending
-            LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - >>> DEBUG <<< Begin execution >>>");
+            // StreamWriter LogWriter = new StreamWriter(appFolder + "\\PMU.log", true); // Open appending
+            // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - >>> DEBUG <<< Begin execution >>>");
+            LogWriter.file = appFolder + "\\PMU.log";
+            sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - >>> DEBUG <<< Begin execution >>>");
+            LogWriter.sTextToAppend = sTextToAppend;
+            LogWriter.Append();
+            sTextToAppend.Clear();
 
             // Recovering last file saved
             StreamReader MyReader = new StreamReader(appFolder + "LastFile.pmu");
             string lastFileSavedFromFile = MyReader.ReadLine();
             MyReader.Close();
 
-            // StreamWriter LogWriter = new StreamWriter(appFolder + "\\PMU.log", true); // Open appending
-            LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Last file read: " + lastFileSavedFromFile);
+            // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Last file read: " + lastFileSavedFromFile);
+            LogWriter.file = appFolder + "\\PMU.log";
+            sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Last file read: " + lastFileSavedFromFile);
+            LogWriter.sTextToAppend = sTextToAppend;
+            LogWriter.Append();
+            sTextToAppend.Clear();
 
             // Console.WriteLine("LastFileSaved read from App.Config: " + lastFileSavedFromFile);
             
@@ -134,7 +145,12 @@ namespace SynchS3LocalFolder
                     sParams += " " + args[1];
                     // ---------------------------------------------------------------------------------------------------------------------------
 
-                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Parameters 1 and 2 read.");
+                    // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Parameters 1 and 2 read.");
+                    LogWriter.file = appFolder + "\\PMU.log";
+                    sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Parameters 1 and 2 read.");
+                    LogWriter.sTextToAppend = sTextToAppend;
+                    LogWriter.Append();
+                    sTextToAppend.Clear();
 
                     // --------------------------------------------------- Parameters 3 and 4 ----------------------------------------------------
                     // Parameters 3 and 4 are optional and the order in which they are passed is irrelevant. They are flags that determine:
@@ -212,31 +228,54 @@ namespace SynchS3LocalFolder
                         sParams += " " + args[2] + " " + args[3];
                     }
 
-                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Parameters 3 and 4 treated.");
+                    // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Parameters 3 and 4 treated.");
+                    LogWriter.file = appFolder + "\\PMU.log";
+                    sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Parameters 3 and 4 treated.");
+                    LogWriter.sTextToAppend = sTextToAppend;
+                    LogWriter.Append();
+                    sTextToAppend.Clear();
 
                     if (!(loadAll || loadNew)) // Load all is default
                         loadAll = true;
 
                     // ---------------------------------------------------------------------------------------------------------------------------
 
-                    // StreamWriter LogWriter = new StreamWriter(appFolder + "\\PMU.log", true); // Open appending
-                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Begin generation.");
-                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Parameters: " + sParams);
+                    // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Begin generation.");
+                    // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Parameters: " + sParams);
+                    LogWriter.file = appFolder + "\\PMU.log";
+                    sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Begin generation." + Environment.NewLine + 
+                                         DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Parameters: " + sParams);
+                    LogWriter.sTextToAppend = sTextToAppend;
+                    LogWriter.Append();
+                    sTextToAppend.Clear();
 
                     if(SynchToSource)
                     {
                         while(!FilesOnSource.ContainsKey("SynchToken.pmu") && waitForToken < 6)
                         {
-                            LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Waiting for token. Attempt " + Convert.ToString(waitForToken + 1));
+                            // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Waiting for token. Attempt " + Convert.ToString(waitForToken + 1));
+                            LogWriter.file = appFolder + "\\PMU.log";
+                            sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Waiting for token. Attempt " + Convert.ToString(waitForToken + 1));
+                            LogWriter.sTextToAppend = sTextToAppend;
+                            LogWriter.Append();
+                            sTextToAppend.Clear();
+
                             System.Threading.Thread.Sleep(300000); // Wait for 5 minutes
                             waitForToken++;
                             FilesOnSource = GetS3Files(client, sSourceBucketName, sSourceBucketPrefix);
                         }
                         if(waitForToken == 6)
                         {
-                            LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - TIMEOUT!!! EXECUTION ABORTED.");
-                            LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " -------------------------------------");
-                            LogWriter.Close();
+                            // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - TIMEOUT!!! EXECUTION ABORTED.");
+                            // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " -------------------------------------");
+                            // LogWriter.Close();
+                            LogWriter.file = appFolder + "\\PMU.log";
+                            sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - TIMEOUT!!! EXECUTION ABORTED." + Environment.NewLine +
+                                                 DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " -------------------------------------");
+                            LogWriter.sTextToAppend = sTextToAppend;
+                            LogWriter.Append();
+                            sTextToAppend.Clear();
+
                             return;
                         }
                     }
@@ -320,9 +359,16 @@ namespace SynchS3LocalFolder
                                 }
                                 catch (Exception e)
                                 {
-                                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!! " + e.Message);
                                     sServiceStatus = GetServiceStatus("openPDC");
-                                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Service was " + sServiceStatus);
+                                    LogWriter.file = appFolder + "\\PMU.log";
+                                    sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!! " + e.Message + Environment.NewLine +
+                                                         DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Service was " + sServiceStatus);
+                                    LogWriter.sTextToAppend = sTextToAppend;
+                                    LogWriter.Append();
+                                    sTextToAppend.Clear();
+                                    // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!! " + e.Message);
+                                    // sServiceStatus = GetServiceStatus("openPDC");
+                                    // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Service was " + sServiceStatus);
                                 }
                             }
                             else
@@ -341,9 +387,17 @@ namespace SynchS3LocalFolder
                                 }
                                 catch (Exception e)
                                 {
-                                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!! " + e.Message);
+                                    // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!! " + e.Message);
+                                    // sServiceStatus = GetServiceStatus("openPDC");
+                                    // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Service was " + sServiceStatus);
+
                                     sServiceStatus = GetServiceStatus("openPDC");
-                                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Service was " + sServiceStatus);
+                                    LogWriter.file = appFolder + "\\PMU.log";
+                                    sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!! " + e.Message + Environment.NewLine +
+                                                         DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Service was " + sServiceStatus);
+                                    LogWriter.sTextToAppend = sTextToAppend;
+                                    LogWriter.Append();
+                                    sTextToAppend.Clear();
                                 }
                             }
                         }
@@ -373,9 +427,17 @@ namespace SynchS3LocalFolder
                             }
                             catch (Exception e)
                             {
-                                LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!! " + e.Message);
+                                // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!! " + e.Message);
+                                // sServiceStatus = GetServiceStatus("openPDC");
+                                // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Service was " + sServiceStatus);
+
                                 sServiceStatus = GetServiceStatus("openPDC");
-                                LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Service was " + sServiceStatus);
+                                LogWriter.file = appFolder + "\\PMU.log";
+                                sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - File " + currFile + " NOT COPPIED!!! " + e.Message + Environment.NewLine +
+                                                     DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Service was " + sServiceStatus);
+                                LogWriter.sTextToAppend = sTextToAppend;
+                                LogWriter.Append();
+                                sTextToAppend.Clear();
                             }
                         }
                         Console.WriteLine(currFile + " treated.");
@@ -429,28 +491,57 @@ namespace SynchS3LocalFolder
                                 copyRequest.DestinationBucket = sTargetBucketName + "/" + sTargetBucketPrefix;
                                 copyRequest.DestinationKey = z_File.Substring(2);
                                 copyResponse = client.CopyObject(copyRequest);
-                                LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - " + z_File + " renamed on S3");
+
+                                // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - " + z_File + " renamed on S3");
+                                LogWriter.file = appFolder + "\\PMU.log";
+                                sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - " + z_File + " renamed on S3");
+                                LogWriter.sTextToAppend = sTextToAppend;
+                                LogWriter.Append();
+                                sTextToAppend.Clear();
 
                                 deleteRequest.BucketName = sTargetBucketName + "/" + sTargetBucketPrefix;
                                 deleteRequest.Key = z_File;
                                 client.DeleteObject(deleteRequest);
-                                LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - " + z_File + " deleted from S3");
+                                
+                                // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - " + z_File + " deleted from S3");
+                                LogWriter.file = appFolder + "\\PMU.log";
+                                sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - " + z_File + " deleted from S3");
+                                LogWriter.sTextToAppend = sTextToAppend;
+                                LogWriter.Append();
+                                sTextToAppend.Clear();
                             }
                             catch (Exception e)
                             {
-                                LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Error treating file " + z_File + " on S3");
-                                LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Error Message: " + e.Message);
+                                // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Error treating file " + z_File + " on S3");
+                                // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Error Message: " + e.Message);
+                                LogWriter.file = appFolder + "\\PMU.log";
+                                sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Error treating file " + z_File + " on S3" + Environment.NewLine +
+                                                     DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Error Message: " + e.Message);
+                                LogWriter.sTextToAppend = sTextToAppend;
+                                LogWriter.Append();
+                                sTextToAppend.Clear();
                             }
                             
                             try
                             {
                                 System.IO.File.Delete(dirName + "\\" + z_File);
-                                LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - " + z_File + " deleted from local folder");
+                                // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - " + z_File + " deleted from local folder");
+                                LogWriter.file = appFolder + "\\PMU.log";
+                                sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - " + z_File + " deleted from local folder");
+                                LogWriter.sTextToAppend = sTextToAppend;
+                                LogWriter.Append();
+                                sTextToAppend.Clear();
                             }
                             catch (Exception e)
                             {
-                                LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Error treating local file " + z_File);
-                                LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Error Message: " + e.Message);
+                                // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Error treating local file " + z_File);
+                                // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Error Message: " + e.Message);
+                                LogWriter.file = appFolder + "\\PMU.log";
+                                sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Error treating local file " + z_File + Environment.NewLine +
+                                                     DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Error Message: " + e.Message);
+                                LogWriter.sTextToAppend = sTextToAppend;
+                                LogWriter.Append();
+                                sTextToAppend.Clear();
                             }
                         }
                     }
@@ -461,9 +552,15 @@ namespace SynchS3LocalFolder
                     MyWriter.Write(sLatestFile);
                     MyWriter.Close();
 
-                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - End of generation.");
-                    LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " -------------------------------------");
-                    LogWriter.Close();
+                    // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - End of generation.");
+                    // LogWriter.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " -------------------------------------");
+                    // LogWriter.Close();
+                    LogWriter.file = appFolder + "\\PMU.log";
+                    sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - End of generation." + Environment.NewLine +
+                                         DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " -------------------------------------");
+                    LogWriter.sTextToAppend = sTextToAppend;
+                    LogWriter.Append();
+                    sTextToAppend.Clear();
 
                 } // end try
                 catch (Exception e)
@@ -558,6 +655,20 @@ namespace SynchS3LocalFolder
                     return "Starting";
                 default:
                     return "Status Changing";
+            }
+        }
+
+        private class AppendOnFile
+        {
+            public string file;
+            public StringBuilder sTextToAppend = new StringBuilder();
+
+            public void Append()
+            {
+                StreamWriter localOutputFile;
+                localOutputFile = new System.IO.StreamWriter(file, true);
+                localOutputFile.WriteLine(sTextToAppend);
+                localOutputFile.Close();
             }
         }
     }
