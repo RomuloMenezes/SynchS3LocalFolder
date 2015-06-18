@@ -565,7 +565,12 @@ namespace SynchS3LocalFolder
                 } // end try
                 catch (Exception e)
                 {
-                    Console.WriteLine("Erro! " + e.Message);
+                    Console.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + "Erro! " + e.Message);
+                    LogWriter.file = appFolder + "\\PMU.log";
+                    sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + "Erro! " + e.Message);
+                    LogWriter.sTextToAppend = sTextToAppend;
+                    LogWriter.Append();
+                    sTextToAppend.Clear();
                     return;
                 }
             }
