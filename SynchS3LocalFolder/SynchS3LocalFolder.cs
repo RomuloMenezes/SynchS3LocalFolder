@@ -451,7 +451,7 @@ namespace SynchS3LocalFolder
                                 transfer.Download("SynchToken.pmu", sSourceBucketName + "/" + sSourceBucketPrefix, "SynchToken.pmu");
                             else // Local folder is the source
                             {
-                                transfer.Upload("SynchToken.pmu", sTargetBucketName + "/" + sTargetBucketPrefix, "SynchToken.pmu");
+                                transfer.Upload(dirName + "\\SynchToken.pmu", sTargetBucketName + "/" + sTargetBucketPrefix, "SynchToken.pmu");
                             }
                         }
                         else
@@ -565,9 +565,9 @@ namespace SynchS3LocalFolder
                 } // end try
                 catch (Exception e)
                 {
-                    Console.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + "Erro! " + e.Message);
+                    Console.WriteLine(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Erro! " + e.Message);
                     LogWriter.file = appFolder + "\\PMU.log";
-                    sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + "Erro! " + e.Message);
+                    sTextToAppend.Append(DateTime.Now.ToString("yyyyMMdd HH:mm:ss") + " - Erro! " + e.Message);
                     LogWriter.sTextToAppend = sTextToAppend;
                     LogWriter.Append();
                     sTextToAppend.Clear();
