@@ -308,7 +308,7 @@ namespace SynchS3LocalFolder
                             }
                             else
                             {
-                                if (currFile.EndsWith(".dat") && !currFile.StartsWith("z_"))
+                                if (currFile.EndsWith(".dat") && !currFile.StartsWith("z_")) // Copying .dat files
                                 {
                                     if (args[0].Substring(0, 5) == "s3://" || args[0].Substring(0, 5) == "S3://") // S3 is the source
                                         FilesToCopy.Add(currFile, currFile);
@@ -320,6 +320,9 @@ namespace SynchS3LocalFolder
                                         FilesToCopy.Add("z_" + currFile, "z_" + currFile);
                                     }
                                 }
+                                else
+                                    if (currFile == "SynchToken.pmu") // Copying synch token
+                                        FilesToCopy.Add(currFile, currFile);
                             }
                             
                         }
